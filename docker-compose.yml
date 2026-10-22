@@ -1,0 +1,40 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: pruebadb
+      MYSQL_USER: usuario
+      MYSQL_PASSWORD: clave123
+    ports:
+      # Se mapea 3307 en el host para evitar conflicto con servicios MySQL locales en el puerto 3306
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  web:
+    build:
+      context: ./src
+    container_name: python_web_app
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: db
+      DB_USER: usuario
+      DB_PASSWORD: clave123
+      DB_NAME: pruebadb
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
